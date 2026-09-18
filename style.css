@@ -1,0 +1,211 @@
+﻿body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #000;
+}
+
+.calculator {
+  --gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  width: 100%;
+  max-width: 384px;
+  height: 100%;
+  max-height: 575px;
+  min-height: 0;
+}
+
+.display {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 1 129px;
+  min-height: 0;
+  padding: 16px 24px;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 25px;
+  color: #000;
+  font-size: 40px;
+}
+
+/* The base and hex rows share three keypad columns; AC/Delete occupies the fourth. */
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 34px);
+  gap: var(--gap);
+}
+
+.base-buttons,
+.hex-buttons,
+.keypad {
+  display: grid;
+  gap: var(--gap);
+}
+
+.base-buttons,
+.hex-buttons {
+  grid-column: 1 / span 3;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.base-buttons {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.hex-buttons {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.edit-control {
+  grid-column: 4;
+  grid-row: 1 / span 2;
+}
+
+.keypad {
+  flex: 1 1 0;
+  min-height: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  background: #d9d9d9;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hex-buttons button {
+  border-radius: 5px;
+}
+
+.key {
+  border-radius: 15px;
+  font-family: "IBM Plex Mono", "IBM Plex Mono-SemiBold", Consolas, monospace;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+button:hover {
+  background: #cecece;
+}
+
+button:active {
+  background: #c3c3c3;
+}
+
+/* Prompts and results scroll inside the existing display geometry. */
+.display {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.display-title {
+  flex: none;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.display-hint,
+.display-summary {
+  flex: none;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.result-heading {
+  flex: none;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.display-summary {
+  font-family: "IBM Plex Mono", Consolas, monospace;
+}
+
+.display:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+.display-value {
+  flex: none;
+  font-family: "IBM Plex Mono", Consolas, monospace;
+  font-size: 28px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+button:disabled {
+  background: #d9d9d9;
+  color: #777;
+  opacity: 0.45;
+  cursor: default;
+}
+
+button[aria-pressed="true"] {
+  background: #777;
+  color: #fff;
+  box-shadow: inset 0 0 0 2px #444;
+}
+
+/* Keep the results scrollbar quiet and inside the rounded display. */
+.display::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+.display::-webkit-scrollbar-track {
+  margin-block: 25px;
+}
+
+.display::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 4px;
+}
+
+/* Shared grid cell; clipping limits each button's pointer hit region. */
+.edit-control { display: grid; border-radius: 15px; overflow: hidden; isolation: isolate; }
+.edit-control button, .edit-divider {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+.edit-control button {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  font: 600 22px/1 Consolas, monospace;
+}
+.edit-clear { clip-path: polygon(0 0, 100% 0, 0 100%); }
+.edit-clear { background: #d9534f; }
+.edit-clear:hover { background: #c9302c; }
+.edit-clear:active { background: #ac2925; }
+.edit-delete { clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.edit-clear span { grid-area: 1 / 1 / 3 / 3; }
+.edit-delete span { grid-area: 2 / 2 / 4 / 4; }
+.edit-control span { place-self: center; pointer-events: none; }
+.edit-divider { pointer-events: none; z-index: 1; }
+.edit-divider path { stroke: #777; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.edit-control button:focus-visible { outline: none; background: #b8cde0; }

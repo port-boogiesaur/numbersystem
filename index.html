@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Number System Calculator</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="renderer.js" defer></script>
+</head>
+<body>
+  <main class="calculator" aria-label="Number system calculator">
+    <output id="display" class="display" aria-label="Calculator display" aria-live="polite" aria-atomic="true" tabindex="0"></output>
+
+    <div class="controls">
+      <div class="base-buttons" role="group" aria-label="Number base">
+        <button type="button" data-base="2">BIN</button>
+        <button type="button" data-base="8">OCT</button>
+        <button type="button" data-base="10">DEC</button>
+        <button type="button" data-base="16">HEX</button>
+      </div>
+      <div class="hex-buttons" role="group" aria-label="Hexadecimal digits">
+        <button type="button" data-value="A">A</button>
+        <button type="button" data-value="B">B</button>
+        <button type="button" data-value="C">C</button>
+        <button type="button" data-value="D">D</button>
+        <button type="button" data-value="E">E</button>
+        <button type="button" data-value="F">F</button>
+      </div>
+      <div class="edit-control" role="group" aria-label="Clear and delete">
+        <button type="button" class="edit-clear" data-action="clear" aria-label="All clear"><span>AC</span></button>
+        <button type="button" class="edit-delete" data-action="backspace" aria-label="Backspace"><span>&#x232B;</span></button>
+        <svg class="edit-divider" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 100 L 100 0" /></svg>
+      </div>
+    </div>
+
+    <div class="keypad" role="group" aria-label="Digits and operations">
+      <button type="button" class="key" data-value="7">7</button>
+      <button type="button" class="key" data-value="8">8</button>
+      <button type="button" class="key" data-value="9">9</button>
+      <button type="button" class="key" data-operation="divide" aria-label="Divide">&#xF7;</button>
+
+      <button type="button" class="key" data-value="4">4</button>
+      <button type="button" class="key" data-value="5">5</button>
+      <button type="button" class="key" data-value="6">6</button>
+      <button type="button" class="key" data-operation="multiply" aria-label="Multiply">&#xD7;</button>
+
+      <button type="button" class="key" data-value="1">1</button>
+      <button type="button" class="key" data-value="2">2</button>
+      <button type="button" class="key" data-value="3">3</button>
+      <button type="button" class="key" data-operation="subtract" aria-label="Subtract">&#x2212;</button>
+
+      <button type="button" class="key" data-value="0">0</button>
+      <button type="button" class="key" data-value="." aria-label="Decimal point">.</button>
+      <button type="button" class="key" data-action="equals" aria-label="Equals">=</button>
+      <button type="button" class="key" data-operation="add" aria-label="Add">+</button>
+    </div>
+  </main>
+</body>
+</html>
+
