@@ -54,7 +54,7 @@ A desktop application built with **Electron, HTML, CSS, and JavaScript** that co
 4. Run the application:
 
    ```bash
-   npm start
+   npm.cmd start
    ```
 
 ## Project Structure
