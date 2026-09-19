@@ -14,7 +14,6 @@
   width: 100%;
   max-width: 384px;
   height: 100%;
-  max-height: 575px;
   min-height: 0;
 }
 
@@ -22,7 +21,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  flex: 0 1 129px;
+  /* Give unused window height to the display rather than outer margins. */
+  flex: 1 1 129px;
   min-height: 0;
   padding: 16px 24px;
   overflow: hidden;
@@ -35,6 +35,7 @@
 /* The base and hex rows share three keypad columns; AC/Delete occupies the fourth. */
 .controls {
   display: grid;
+  flex-shrink: 0;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(2, 34px);
   gap: var(--gap);
@@ -68,7 +69,7 @@
 }
 
 .keypad {
-  flex: 1 1 0;
+  flex: 0 1 354px;
   min-height: 0;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(0, 1fr));
@@ -209,3 +210,72 @@ button[aria-pressed="true"] {
 .edit-divider { pointer-events: none; z-index: 1; }
 .edit-divider path { stroke: #777; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .edit-control button:focus-visible { outline: none; background: #b8cde0; }
+
+/* Bundled pixel font works offline; keypad typography stays unchanged. */
+@font-face {
+  font-family: "Calculator Pixel";
+  src: url("assets/fonts/Silkscreen-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.display,
+.display-summary,
+.display-value {
+  font-family: "Calculator Pixel", Consolas, monospace;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+.display-title,
+.result-heading {
+  font-weight: 400;
+}
+
+.display-title {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.display-hint {
+  font-size: 12px;
+  color: #666;
+}
+
+.display-summary,
+.result-heading {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.display-value {
+  font-size: 28px;
+}
+
+/* Optional working stays inside the existing scrollable display. */
+.complement-panel {
+  flex: none;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.complement-panel details {
+  margin-top: 8px;
+}
+
+.complement-panel summary {
+  cursor: pointer;
+}
+
+.complement-panel summary:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+.complement-line {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}

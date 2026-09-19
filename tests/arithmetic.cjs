@@ -55,7 +55,10 @@ function testWorkflow() {
     check(!entry() && !document.querySelector('[aria-pressed="true"]'), 'Reset removes values/selections');
     check([...document.querySelectorAll('[data-base], [data-operation]')].every(b => b.disabled), 'Reset disables bases/operators');
   };
-  const restart = () => { action('clear'); action('equals'); assertReset(); };
+  const restart = () => {
+    for (let i = 0; i < 20 && !text().includes('How many input numbers?'); i++) action('clear');
+    action('clear'); assertReset();
+  };
   const collect = inputs => {
     digit(String(inputs.length)); action('equals');
     inputs.forEach(([base, value], index) => {
@@ -65,6 +68,7 @@ function testWorkflow() {
       action('equals');
     });
     check(document.querySelectorAll('.result-heading').length === inputs.length, 'All individual conversions');
+    check(document.querySelectorAll('.complement-panel > details').length === 4, 'Complements available in all four bases');
     check(geometry() === initialGeometry, 'Fixed keypad at individual results');
     action('equals');
     check(text().includes('Select an arithmetic operation') && allowed() === '', 'Operation stage');
@@ -109,10 +113,16 @@ function testWorkflow() {
     } else {
       check(decimal() === expected, `${name}: expected ${expected}, got ${decimal()}`);
       if (name === 'Addition') check(['BIN: 101101','OCT: 55','HEX: 2D'].every(line => output().includes(line)), 'All final bases');
+      if (operation === 'subtract') {
+        check(document.querySelector('.complement-panel > summary').textContent === 'Complement subtraction', 'Both subtraction methods available');
+        const panels = [...document.querySelectorAll('.complement-panel > details')];
+        check(panels.length === 4 && panels.every(panel => panel.textContent.includes('Encoded:') && panel.textContent.includes('Signed:')), 'Complement steps in every base');
+      }
       if (name === 'Negative') check(['BIN: -1010','OCT: -12','HEX: -A'].every(line => output().includes(line)), 'All negative bases');
     }
     check(geometry() === initialGeometry && document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth, 'Fixed geometry/no overflow');
-    const previous = text(); action('clear'); action('backspace'); check(text() === previous, 'Cancel restart preserves screen');
+    action('clear'); check(text().includes('Select an arithmetic operation'), 'AC returns to operation selection');
+    calculate(operation);
     action('backspace'); check(text().includes('Select an arithmetic operation') && button('action','equals').disabled, 'Return to operation selection');
     calculate('add'); check(decimal() !== undefined, 'Recalculate retained inputs');
     restart(); reports.push(`${name}: passed`);
@@ -138,8 +148,21 @@ function testWorkflow() {
   for (const [base,valid] of [[2,'01'],[8,'01234567'],[10,'0123456789'],[16,'0123456789ABCDEF']]) {
     button('base',base).click(); check(allowed() === '.'+valid, 'Base restrictions');
     digit('.'); digit('.'); check(entry() === '0.', 'One decimal/leading zero');
-    action('backspace'); check(entry() === '0', 'Delete decimal');action('clear');check(!entry(), 'Clear fractional input');
+    action('backspace'); check(entry() === '0', 'Delete decimal');action('backspace');check(!entry(), 'Delete remaining digit');
   }
+  action('clear');
+  check(text().includes('How many input numbers?'), 'AC returns to count');
+  digit('3'); action('equals');
+  button('base', 16).click(); digit('A'); action('equals');
+  button('base', 10).click(); digit('2'); action('equals');
+  action('clear');
+  check(text().includes('Input 2 of 3') && entry() === '2' && button('base',10).getAttribute('aria-pressed') === 'true', 'Restore previous value/base');
+  action('backspace'); digit('3'); action('equals');
+  button('base', 2).click(); digit('1'); action('equals');
+  action('clear'); check(entry() === '1', 'Conversions back to last input');
+  action('equals'); action('equals'); calculate('add');
+  check(decimal() === '14', 'Corrected input recalculated without duplicates');
+  restart();
   return { reports, additionalChecks: 'Exact precision, signed fractions, repeating output, zero numerator/divisors, restart, selection, decimal editing and fixed layout passed' };
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
