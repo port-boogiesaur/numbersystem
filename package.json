@@ -4,7 +4,9 @@
   "description": "",
   "main": "main.js",
 "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "test": "node tests/complements.cjs && node tests/bcd.cjs",
+    "test:ui": "node tests/arithmetic.cjs && node tests/bcd-workflow.cjs"
 },
   "keywords": [],
   "author": "",

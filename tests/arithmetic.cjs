@@ -38,7 +38,7 @@ async function run() {
   } finally { ws.close(); }
 }
 
-function testWorkflow() {
+function testWorkflow(verifyLayout = true) {
   const check = (condition, message) => { if (!condition) throw new Error(message); };
   const button = (key, value) => document.querySelector(`[data-${key}="${value}"]`);
   const digit = value => button('value', value).click();
@@ -48,7 +48,7 @@ function testWorkflow() {
   const text = () => display.textContent;
   const entry = () => document.querySelector('.display-value')?.textContent || '';
   const allowed = () => [...document.querySelectorAll('[data-value]:not(:disabled)')].map(b => b.dataset.value).sort().join('');
-  const geometry = () => JSON.stringify(document.querySelector('.keypad').getBoundingClientRect().toJSON());
+  const geometry = () => verifyLayout ? JSON.stringify(document.querySelector('.keypad').getBoundingClientRect().toJSON()) : '';
   const initialGeometry = geometry();
   const assertReset = () => {
     check(text().includes('Enter 3 to 9') && allowed() === '3456789', 'Reset/count restrictions');
@@ -120,7 +120,7 @@ function testWorkflow() {
       }
       if (name === 'Negative') check(['BIN: -1010','OCT: -12','HEX: -A'].every(line => output().includes(line)), 'All negative bases');
     }
-    check(geometry() === initialGeometry && document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth, 'Fixed geometry/no overflow');
+    if (verifyLayout) check(geometry() === initialGeometry && document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth, 'Fixed geometry/no overflow');
     action('clear'); check(text().includes('Select an arithmetic operation'), 'AC returns to operation selection');
     calculate(operation);
     action('backspace'); check(text().includes('Select an arithmetic operation') && button('action','equals').disabled, 'Return to operation selection');
@@ -131,7 +131,7 @@ function testWorkflow() {
   const nine = Array.from({length:9}, (_,i) => [[2,'1.1'],[8,'1.4'],[10,'1.5'],[16,'1.8']][i%4]);
   collect(nine); calculate('add'); check(decimal() === '13.5', 'Nine-input sum');
   check((output()[0].match(/\(/g)||[]).length === 9, 'Nine terms in expression');
-  display.scrollTop = display.scrollHeight; check(display.scrollTop > 0, 'Long results scroll');
+  display.scrollTop = display.scrollHeight; if (verifyLayout) check(display.scrollTop > 0, 'Long results scroll');
   restart(); reports.push('Nine mixed-base fractional inputs: 13.5 passed');
   for (const [inputs,op,expected] of [
     [[[10,'1'],[10,'3'],[10,'1']], 'divide', '0.33333333'+String.fromCodePoint(8230)],
@@ -163,6 +163,7 @@ function testWorkflow() {
   action('equals'); action('equals'); calculate('add');
   check(decimal() === '14', 'Corrected input recalculated without duplicates');
   restart();
-  return { reports, additionalChecks: 'Exact precision, signed fractions, repeating output, zero numerator/divisors, restart, selection, decimal editing and fixed layout passed' };
+  return { reports, additionalChecks: 'Exact precision, signed fractions, repeating output, zero numerator/divisors, navigation, selection and decimal editing passed', layout: verifyLayout ? 'Passed' : 'Not tested in DOM simulation' };
 }
-run().catch(error => { console.error(error); process.exitCode = 1; });
+if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
+module.exports = { testWorkflow };

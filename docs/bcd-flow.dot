@@ -1,0 +1,25 @@
+digraph BCD {
+  graph [rankdir=TB, bgcolor="white", pad="0.2", nodesep="0.35", ranksep="0.3"];
+  node [shape=box, style="rounded,filled", fillcolor="#f2f5f8", color="#486079", fontname="Arial", fontsize=12, margin="0.15,0.08"];
+  edge [color="#486079", fontname="Arial", fontsize=10];
+  start [label="Start BCD method", shape=oval];
+  layout [label="Align decimal places; scale to integers\nChoose shared width with enough signed range"];
+  init [label="Initialize encoded result with first operand"];
+  next [label="Read next operand"];
+  sub [label="Subtraction?", shape=diamond];
+  comp [label="9's: replace each digit d with 9 - d\n10's: form 9's complement then add 1"];
+  positive [label="Use ordinary positive BCD operand"];
+  add [label="Add BCD groups from right to left\nIf digit sum > 9, add 0110\nPropagate decimal carry"];
+  method [label="Complement system?", shape=diamond];
+  ten [label="10's: discard carry outside width"];
+  nine [label="9's: add carry to least significant place\nusing corrected BCD addition"];
+  decode [label="Decode signed intermediate result\nNormalize 9's negative zero"];
+  more [label="More operands?", shape=diamond];
+  end [label="Show both answers and optional Steps", shape=oval];
+  start -> layout -> init -> next -> sub;
+  sub -> comp [label="Yes"]; sub -> positive [label="No: addition"];
+  comp -> add; positive -> add; add -> method;
+  method -> ten [label="10's"]; method -> nine [label="9's"];
+  ten -> decode; nine -> decode; decode -> more;
+  more -> next [label="Yes", constraint=false]; more -> end [label="No"];
+}

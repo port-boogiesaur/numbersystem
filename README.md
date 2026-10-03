@@ -22,6 +22,12 @@ A desktop application built with **Electron, HTML, CSS, and JavaScript** that co
   - Division
 - Desktop application using Electron.
 - Simple calculator-style user interface.
+- BCD mode with decimal-digit or actual 4-bit entry, addition and subtraction,
+  9's and 10's complement results, and expandable digit-correction steps.
+- Exact BigInt fractions and radix/diminished-radix complements in all four bases.
+
+See [BCD update and test instructions](docs/BCD_UPDATE.md). Select the mode
+before confirming the input count; use **Number systems** for the original workflow.
 
 ## Technologies Used
 
@@ -66,6 +72,9 @@ numbersystem/
 ├── index.html
 ├── main.js
 ├── renderer.js
+├── complements.js
+├── bcd.js
+├── docs/
 ├── style.css
 ├── package.json
 ├── package-lock.json

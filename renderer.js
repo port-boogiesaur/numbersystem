@@ -2,6 +2,7 @@
 
 (() => {
   const state = {
+    mode: "standard",
     stage: "count",
     countSelection: "",
     inputCount: 0,
@@ -24,6 +25,8 @@
   const calculator = document.querySelector(".calculator");
   const display = document.querySelector("#display");
   const buttons = [...calculator.querySelectorAll("button")];
+  const modeSelect = document.querySelector("#calculation-mode");
+  const isBcd = () => state.mode !== "standard";
 
   function greatestCommonDivisor(a, b) {
     a = a < 0n ? -a : a;
@@ -59,7 +62,7 @@
   }
 
   function formatExpression(inputs, operation) {
-    return inputs.map(input => `(${input.originalText} ${baseNames[input.originalBase]})`)
+    return inputs.map(input => isBcd() ? `(${input.bcd} BCD)` : `(${input.originalText} ${baseNames[input.originalBase]})`)
       .join(` ${operations[operation].symbol} `);
   }
 
@@ -137,6 +140,11 @@
 
   function acceptsValue(value) {
     if (state.stage === "count") return /^[3-9]$/.test(value);
+    if (isBcd() && state.stage === "input") {
+      if (value === ".") return !state.currentValue.includes(".") &&
+        (state.mode !== "bcd-bits" || state.currentValue.length % 4 === 0);
+      return (state.mode === "bcd-bits" ? "01" : "0123456789").includes(value) && value.length === 1;
+    }
     if (value === ".") return state.stage === "input" &&
       state.selectedBase !== null && !state.currentValue.includes(".");
     return state.stage === "input" && state.selectedBase !== null &&
@@ -204,7 +212,61 @@
     return panel;
   }
 
+  function bcdPanel(showWorking) {
+    const report = BcdMath.analyze(state.inputs.map(input => input.decimalText), state.selectedOperation || "add");
+    const panel = document.createElement("details");
+    panel.className = "complement-panel bcd-panel";
+    const summary = document.createElement("summary");
+    summary.textContent = showWorking ? "BCD complement arithmetic" : "BCD complements";
+    panel.append(summary);
+    const fixed = value => BcdMath.fixed(value, report.layout);
+    const bcd = value => BcdMath.encode(fixed(value));
+    const add = (parent, text) => parent.append(line(text, "complement-line"));
+    add(panel, `Width: ${report.layout.integerDigits} + ${report.layout.places} frac`);
+    if (!showWorking) {
+      report.inputs.forEach((input, index) => {
+        add(panel, `Input ${index + 1}: ${fixed(input.value)}`);
+        add(panel, `10's: ${bcd(input.tens)} (${fixed(input.tens)} DEC)`);
+        add(panel, `9's: ${bcd(input.nines)} (${fixed(input.nines)} DEC)`);
+      });
+      return panel;
+    }
+    // Present both answers before the expandable calculation traces.
+    for (const [method, title] of [["tens", "10's"], ["nines", "9's"]]) {
+      add(panel, `${title} result: ${fixed(report[method].signed)} DEC`);
+      add(panel, `BCD: ${bcd(report[method].signed)}`);
+    }
+    if (state.selectedOperation === "add") add(panel, "Positive operands use ordinary BCD in both signed complement systems.");
+    for (const [method, title] of [["tens", "10's"], ["nines", "9's"]]) {
+      const steps = document.createElement("details"), label = document.createElement("summary");
+      label.textContent = `${title} steps`;
+      steps.append(label);
+      report[method].steps.forEach((step, index) => {
+        add(steps, `Step ${index + 1}: ${fixed(step.previous)} + ${fixed(step.added)}`);
+        add(steps, `BCD: ${bcd(step.previous)} + ${bcd(step.added)}`);
+        if (state.selectedOperation === "subtract") add(steps, `${title} of ${fixed(step.operand)}: ${bcd(step.added)}`);
+        const trace = document.createElement("details"), traceTitle = document.createElement("summary");
+        traceTitle.textContent = "Digit corrections (right to left)";
+        trace.append(traceTitle);
+        const corrections = (rows, prefix = "") => rows.forEach(row => {
+          add(trace, `${prefix}Digit ${row.place}: ${row.left} + ${row.right} + ${row.carryIn} = ${row.raw}`);
+          add(trace, `Correction ${row.correction}; digit ${row.digit}; carry ${row.carryOut}`);
+        });
+        corrections(step.corrections);
+        if (step.endAround) corrections(step.endAround.corrections, "End-around ");
+        steps.append(trace);
+        add(steps, step.carry ? (method === "tens" ? "Discard carry: 1" : "End-around carry: +1 least place") : "No carry");
+        add(steps, `Encoded: ${bcd(step.encoded)}`);
+        add(steps, `Signed: ${fixed(step.signed)} DEC`);
+      });
+      panel.append(steps);
+    }
+    return panel;
+  }
+
   function render() {
+    modeSelect.value = state.mode;
+    modeSelect.disabled = state.stage !== "count";
     const lines = [];
     if (state.stage === "count") {
       lines.push(line("How many input numbers?", "display-title"));
@@ -212,23 +274,29 @@
       if (state.countSelection) lines.push(line(state.countSelection, "display-value"));
     } else if (state.stage === "input") {
       lines.push(line(`Input ${state.inputs.length + 1} of ${state.inputCount}`, "display-title"));
+      if (isBcd()) {
+        lines.push(line(state.mode === "bcd-bits" ? "BCD: four bits per digit (0000-1001)" : "Enter decimal digits for BCD", "display-hint"));
+        if (state.currentValue) lines.push(line(state.mode === "bcd-bits" ? BcdMath.groupEntry(state.currentValue) : state.currentValue, "display-value"));
+      } else {
       lines.push(line(state.selectedBase === null ? "Select BIN, OCT, DEC, or HEX" :
         `${baseNames[state.selectedBase]}`, "display-hint"));
       if (state.currentValue) lines.push(line(state.currentValue, "display-value"));
+      }
     } else if (state.stage === "results") {
       lines.push(line("Conversions", "display-title"));
       lines.push(line("= Continue", "display-hint"));
       state.inputs.forEach((input, index) => {
-        lines.push(line(`Input ${index + 1}: ${input.originalText} (${baseNames[input.originalBase]})`, "result-heading"));
+        lines.push(line(`Input ${index + 1}: ${isBcd() ? input.decimalText + " (DEC)" : input.originalText + " (" + baseNames[input.originalBase] + ")"}`, "result-heading"));
+        if (isBcd()) lines.push(line(`BCD: ${input.bcd}`, "display-summary"));
         const { binary, octal, decimal, hexadecimal } = input.conversions;
         for (const text of [`BIN: ${binary}`, `OCT: ${octal}`, `DEC: ${decimal}`, `HEX: ${hexadecimal}`]) {
           lines.push(line(text, "display-summary"));
         }
       });
-      lines.push(complementPanel(false));
+      lines.push(isBcd() ? bcdPanel(false) : complementPanel(false));
     } else if (state.stage === "operation") {
       lines.push(line("Select an arithmetic operation", "display-title"));
-      lines.push(line("+, \u2212, \u00d7, or \u00f7", "display-hint"));
+      lines.push(line(isBcd() ? "+ or \u2212 (BCD)" : "+, \u2212, \u00d7, or \u00f7", "display-hint"));
       if (state.selectedOperation) lines.push(line(`${operations[state.selectedOperation].name}  =`, "display-hint"));
     } else if (state.stage === "final" || state.stage === "error") {
       lines.push(line("Expression:", "display-title"));
@@ -237,11 +305,16 @@
         lines.push(line("Cannot divide by zero.", "display-title"));
       } else {
         lines.push(line("Result", "display-title"));
+        if (isBcd()) {
+          const report = BcdMath.analyze(state.inputs.map(input => input.decimalText), state.selectedOperation);
+          lines.push(line(`BCD: ${BcdMath.encode(BcdMath.fixed(report.tens.signed, report.layout, false))}`, "display-summary"));
+        }
         const { binary, octal, decimal, hexadecimal } = convertToAllBases(state.finalResult);
         for (const text of [`BIN: ${binary}`, `OCT: ${octal}`, `DEC: ${decimal}`, `HEX: ${hexadecimal}`]) {
           lines.push(line(text, "display-summary"));
         }
-        if (state.selectedOperation === "subtract") lines.push(complementPanel(true));
+        if (isBcd()) lines.push(bcdPanel(true));
+        else if (state.selectedOperation === "subtract") lines.push(complementPanel(true));
       }
     }
     if (state.message) lines.push(line(state.message, "display-hint"));
@@ -252,10 +325,10 @@
       const { value, base, action, operation } = button.dataset;
       if (value !== undefined) button.disabled = !acceptsValue(value);
       else if (base !== undefined) {
-        button.disabled = state.stage !== "input";
+        button.disabled = state.stage !== "input" || isBcd();
         button.setAttribute("aria-pressed", String(Number(base) === state.selectedBase));
       } else if (operation) {
-        button.disabled = state.stage !== "operation";
+        button.disabled = state.stage !== "operation" || (isBcd() && !["add", "subtract"].includes(operation));
         button.setAttribute("aria-pressed", String(state.stage === "operation" && operation === state.selectedOperation));
       } else {
         const availableActions = {
@@ -290,6 +363,17 @@
       state.inputCount = Number(state.countSelection);
       state.stage = "input";
     } else if (state.stage === "input") {
+      if (isBcd()) {
+        try {
+          const decimalText = state.mode === "bcd-bits" ? BcdMath.decode(state.currentValue) : state.currentValue;
+          if (!/^\d+(?:\.\d*)?$/.test(decimalText)) throw new Error("Enter a number before pressing =.");
+          const input = createInputResult(decimalText, 10);
+          state.inputs.push({ ...input, decimalText, bcd: BcdMath.encode(decimalText), enteredText: state.currentValue });
+          state.currentValue = "";
+          if (state.inputs.length === state.inputCount) state.stage = "results";
+        } catch (error) { state.message = error.message; }
+        return;
+      }
       if (state.selectedBase === null || !state.currentValue || state.currentValue === ".") {
         state.message = state.selectedBase === null ? "Select a base first." : "Enter a number before pressing =.";
         return;
@@ -321,7 +405,7 @@
 
     if (value !== undefined && acceptsValue(value)) {
       if (state.stage === "count") state.countSelection = value;
-      else if (value === "." && !state.currentValue) state.currentValue = "0.";
+      else if (value === "." && !state.currentValue) state.currentValue = state.mode === "bcd-bits" ? "0000." : "0.";
       else state.currentValue += value;
     } else if (base !== undefined && state.stage === "input") {
       state.selectedBase = Number(base);
@@ -350,6 +434,13 @@
         history.push(previous);
       }
     }
+    render();
+  });
+
+  modeSelect.addEventListener("change", () => {
+    if (state.stage !== "count") return;
+    state.mode = modeSelect.value;
+    state.message = "";
     render();
   });
 
