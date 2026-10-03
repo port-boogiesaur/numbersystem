@@ -1,0 +1,34 @@
+digraph Main {
+  graph [rankdir=TB, bgcolor="white", pad="0.2", nodesep="0.3", ranksep="0.28"];
+  node [shape=box, style="rounded,filled", fillcolor="#f2f5f8", color="#486079", fontname="Arial", fontsize=12, margin="0.13,0.08"];
+  edge [color="#486079", fontname="Arial", fontsize=10];
+  start [label="Start", shape=oval];
+  mode [label="Choose Number systems or BCD entry mode"];
+  count [label="Select 3 to 9 inputs and confirm"];
+  validcount [label="Valid count?", shape=diamond];
+  input [label="Enter input i\nSelect base in Number systems mode"];
+  valid [label="Valid digits / BCD groups?", shape=diamond];
+  store [label="Parse exact fraction; preserve original entry"];
+  more [label="All inputs confirmed?", shape=diamond];
+  conversions [label="Show conversions and expandable complements"];
+  op [label="Select operation and confirm\nBCD: + or minus only"];
+  zero [label="Division by zero?", shape=diamond];
+  error [label="Show error\nBack returns to operation"];
+  calc [label="Calculate exact result left to right"];
+  bcd [label="BCD mode?", shape=diamond];
+  bcdcalc [label="Run corrected BCD arithmetic\nin 10's and 9's systems"];
+  standard [label="For standard subtraction, run\nboth complement methods in four bases"];
+  result [label="Show Result and expandable Steps"];
+  start -> mode -> count -> validcount;
+  validcount:w -> count:w [label="No"];
+  validcount -> input [label="Yes"];
+  input -> valid; valid:w -> input:w [label="No: correct"];
+  valid -> store [label="Yes"]; store -> more;
+  more -> input [label="No: next input"]; more -> conversions [label="Yes"];
+  conversions -> op [label="Equals"];
+  op -> zero; zero -> error [label="Yes"]; error -> op;
+  zero -> calc [label="No"]; calc -> bcd;
+  bcd -> bcdcalc [label="Yes"]; bcd -> standard [label="No"];
+  bcdcalc -> result; standard -> result;
+  result -> op [label="Back", style=dashed, constraint=false];
+}

@@ -7,10 +7,18 @@
   <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="style.css">
   <script src="complements.js" defer></script>
+  <script src="bcd.js" defer></script>
   <script src="renderer.js" defer></script>
 </head>
 <body>
   <main class="calculator" aria-label="Number system calculator">
+    <label class="mode-control">Mode
+      <select id="calculation-mode" aria-label="Calculation mode">
+        <option value="standard">Number systems</option>
+        <option value="bcd-decimal">BCD - decimal entry</option>
+        <option value="bcd-bits">BCD - 4-bit entry</option>
+      </select>
+    </label>
     <output id="display" class="display" aria-label="Calculator display" aria-live="polite" aria-atomic="true" tabindex="0"></output>
 
     <div class="controls">
@@ -59,4 +67,3 @@
   </main>
 </body>
 </html>
-
